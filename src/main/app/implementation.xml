@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+    <flow name="implementationFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/flights" allowedMethods="GET" doc:name="HTTP"/>
+        <set-variable variableName="airline" value="#[message.inboundProperties.'http.query.params'.airline]" doc:name="Variable"/>
+        <choice doc:name="Choice">
+            <when expression="#[flowVars.airline==&quot;american&quot;]">
+                <flow-ref name="american77FlowDatabase" doc:name="Flow Reference"/>
+            </when>
+            <when expression="#[flowVars.airline==&quot;united&quot;]">
+                <flow-ref name="american77Flow1REstfulService" doc:name="Flow Reference"/>
+            </when>
+            <otherwise>
+                <flow-ref name="american77Soapservices" doc:name="Flow Reference"/>
+            </otherwise>
+        </choice>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+    <flow name="implementationFlow1comb2setofpayloadsinto1payload">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/sg" allowedMethods="GET" doc:name="HTTP"/>
+        <scatter-gather doc:name="Scatter-Gather">
+            <flow-ref name="american77FlowDatabase" doc:name="Flow Reference"/>
+            <flow-ref name="american77Flow1REstfulService" doc:name="Flow Reference"/>
+        </scatter-gather>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload]]></dw:set-payload>
+        </dw:transform-message>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+</mule>
